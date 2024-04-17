@@ -22,7 +22,7 @@
           ]
         },
         "KeyName": {
-          "Ref": "GK16"
+          "Ref": "KeyName"
         },
         "SecurityGroups": [
           {
