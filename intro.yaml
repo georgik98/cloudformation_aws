@@ -1,77 +1,77 @@
 {
-  "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Sample Template: EC2 instance with security group allowing SSH and HTTP.",
-  "Parameters": {
-    "KeyName": {
-      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
-      "Type": "AWS::EC2::KeyPair::KeyName"
-    }
-  },
-  "Resources": {
-    "MyInstance": {
-      "Type": "AWS::EC2::Instance",
-      "Properties": {
-        "InstanceType": "t2.micro",
-        "ImageId": {
-          "Fn::FindInMap": [
-            "RegionMap",
-            {
-              "Ref": "AWS::Region"
-            },
-            "ami"
-          ]
-        },
-        "KeyName": {
-          "Ref": "KeyName"
-        },
-        "SecurityGroups": [
-          {
-            "Ref": "InstanceSecurityGroup"
-          }
-        ],
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/bash\n",
-                "yum update -y\n",
-                "yum install -y httpd\n",
-                "systemctl start httpd\n",
-                "systemctl enable httpd\n",
-                "echo \"<h1>Welcome to AWS CloudFormation</h1>\" > /var/www/html/index.html\n"
-              ]
-            ]
-          }
-        }
-      }
-    },
-    "InstanceSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": "Enable SSH and HTTP access",
-        "SecurityGroupIngress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "80",
-            "ToPort": "80",
-            "CidrIp": "0.0.0.0/0"
-          }
-        ]
-      }
-    }
-  },
-  "Mappings": {
-    "RegionMap": {
-      "eu-central-1": {
-        "ami": "ami-0d527b8c289b4af7f"
-      }
-    }
-  }
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "AWS CloudFormation Sample Template: EC2 instance with security group allowing SSH and HTTP.",
+	"Parameters": {
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+			"Type": "AWS::EC2::KeyPair::KeyName"
+		}
+	},
+	"Resources": {
+		"MyInstance": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"InstanceType": "t2.micro",
+				"ImageId": {
+					"Fn::FindInMap": [
+						"RegionMap",
+						{
+							"Ref": "AWS::Region"
+						},
+						"ami"
+					]
+				},
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"SecurityGroups": [
+					{
+						"Ref": "InstanceSecurityGroup"
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"",
+							[
+								"#!/bin/bash\n",
+								"yum update -y\n",
+								"yum install -y httpd\n",
+								"systemctl start httpd\n",
+								"systemctl enable httpd\n",
+								"echo \"<h1>Welcome to AWS CloudFormation</h1>\" > /var/www/html/index.html\n"
+							]
+						]
+					}
+				}
+			}
+		},
+		"InstanceSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription": "Enable SSH and HTTP access",
+				"SecurityGroupIngress": [
+					{
+						"IpProtocol": "tcp",
+						"FromPort": "22",
+						"ToPort": "22",
+						"CidrIp": "0.0.0.0/0"
+					},
+					{
+						"IpProtocol": "tcp",
+						"FromPort": "80",
+						"ToPort": "80",
+						"CidrIp": "0.0.0.0/0"
+					}
+				]
+			}
+		}
+	},
+	"Mappings": {
+		"RegionMap": {
+			"eu-central-1": {
+				"ami": "ami-0d527b8c289b4af7f"
+			}
+		}
+	}
 }

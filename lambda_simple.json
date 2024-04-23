@@ -1,0 +1,170 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS resources setup similar to Terraform for S3 to S3 copy via Lambda",
+    "Parameters": {
+      "envName": {
+        "Type": "String",
+        "Default": "s3-to-s3-copy-example",
+        "Description": "Terraform environment name"
+      }
+    },
+    "Resources": {
+      "LambdaExecutionRole": {
+        "Type": "AWS::IAM::Role",
+        "Properties": {
+          "RoleName": {
+            "Fn::Sub": "app_${envName}_lambda"
+          },
+          "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Service": "lambda.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+              }
+            ]
+          },
+          "Policies": [
+            {
+              "PolicyName": {
+                "Fn::Sub": "${envName}_lambda_policy"
+              },
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:ListBucket",
+                      "s3:GetObject",
+                      "s3:CopyObject",
+                      "s3:HeadObject"
+                    ],
+                    "Resource": [
+                      {
+                        "Fn::Sub": "arn:aws:s3:::${envName}-src-bucket",
+                        "Fn::Sub": "arn:aws:s3:::${envName}-src-bucket/*"
+                      }
+                    ]
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "s3:ListBucket",
+                      "s3:PutObject",
+                      "s3:PutObjectAcl",
+                      "s3:CopyObject",
+                      "s3:HeadObject"
+                    ],
+                    "Resource": [
+                      {
+                        "Fn::Sub": "arn:aws:s3:::${envName}-dst-bucket",
+                        "Fn::Sub": "arn:aws:s3:::${envName}-dst-bucket/*"
+                      }
+                    ]
+                  },
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "logs:CreateLogGroup",
+                      "logs:CreateLogStream",
+                      "logs:PutLogEvents"
+                    ],
+                    "Resource": "*"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "LambdaFunction": {
+        "Type": "AWS::Lambda::Function",
+        "Properties": {
+          "FunctionName": {
+            "Fn::Sub": "${envName}_s3_copy_lambda"
+          },
+          "Runtime": "python3.10",
+          "Role": {
+            "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]
+          },
+          "Handler": "index.handler",
+          "Code": {
+            "S3Bucket": "YourBucketName",
+            "S3Key": "lambda.zip"
+          },
+          "Environment": {
+            "Variables": {
+              "DST_BUCKET": {
+                "Fn::Sub": "${envName}-dst-bucket"
+              },
+              "REGION": "eu-central-1"
+            }
+          }
+        }
+      },
+      "SourceBucket": {
+        "Type": "AWS::S3::Bucket",
+        "Properties": {
+          "BucketName": {
+            "Fn::Sub": "${envName}-src-bucket-georgik16-1234121"
+          }
+        }
+      },
+      "DestinationBucket": {
+        "Type": "AWS::S3::Bucket",
+        "Properties": {
+          "BucketName": {
+            "Fn::Sub": "${envName}-dst-bucket-georgik16-123412100"
+          }
+        }
+      },
+      "LambdaInvokePermission": {
+        "Type": "AWS::Lambda::Permission",
+        "Properties": {
+          "FunctionName": {
+            "Ref": "LambdaFunction"
+          },
+          "Action": "lambda:InvokeFunction",
+          "Principal": "s3.amazonaws.com",
+          "SourceArn": {
+            "Fn::GetAtt": ["SourceBucket", "Arn"]
+          }
+        }
+      },
+      "BucketNotification": {
+        "Type": "AWS::S3::BucketNotification",
+        "Properties": {
+          "Bucket": {
+            "Ref": "SourceBucket"
+          },
+          "NotificationConfiguration": {
+            "LambdaConfigurations": [
+              {
+                "Event": "s3:ObjectCreated:*",
+                "Function": {
+                  "Fn::GetAtt": ["LambdaFunction", "Arn"]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Outputs": {
+      "SourceS3Bucket": {
+        "Value": {
+          "Ref": "SourceBucket"
+        }
+      },
+      "DestinationS3Bucket": {
+        "Value": {
+          "Ref": "DestinationBucket"
+        }
+      }
+    }
+  }
+  
