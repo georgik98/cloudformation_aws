@@ -1,40 +1,51 @@
 AWSTemplateFormatVersion: 2010-09-09
 Resources:
-  VPC:
-    Type: 'AWS::EC2::VPC'
+  MyVPC:
+    Type: AWS::EC2::VPC
     Properties:
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
       CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: True
+      EnableDnsSupport: True
       Tags:
-        - Key: vpc
-          Value: AWS
-  PublicSubnet:
-    Type: 'AWS::EC2::Subnet'
+        - Key: Name
+          Value: MyActualVPC 
+  MySubnet:
+    Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC
+      AvailabilityZone: eu-central-1a
       CidrBlock: 10.0.0.0/24
-  PublicRouteTable:
-    Type: 'AWS::EC2::RouteTable'
-    Properties:
-      VpcId: !Ref VPC
-  PublicRoute:
-    Type: 'AWS::EC2::Route'
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      GatewayId: !Ref InternetGateway
-      DestinationCidrBlock: 0.0.0.0/0
-    DependsOn:
-      - InternetGateway
-  InternetGateway:
-    Type: 'AWS::EC2::InternetGateway'
-    Properties:
-      VpcID: !Ref VPC
+      MapPublicIpOnLaunch: True
       Tags:
-      - Key: IGW
-        Value: AWS
-  VPCGatewayAttachment:
-    Type: 'AWS::EC2::VPCGatewayAttachment'
+        - Key: Name
+          Value: MyActualSubnet
+      VpcId: !Ref MyVPC 
+  MyInternetGateway:
+    Type: AWS::EC2::InternetGateway
     Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
+      Tags:
+        - Key: Name
+          Value: MyActualInternetGateway 
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref MyInternetGateway
+      VpcId: !Ref MyVPC 
+  MyRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags:
+        - Key: Name
+          Value: MyActualRouteTable
+      VpcId: !Ref MyVPC 
+  MyEC2Route:
+    DependsOn: MyInternetGateway
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref MyInternetGateway
+      RouteTableId: !Ref MyRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+  MySubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      SubnetId: !Ref MySubnet
